@@ -1,4 +1,4 @@
-import time
+import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -8,7 +8,7 @@ CONFIG = {
     "SEED": 1,
     "TRAIN_BATCH_SIZE": 64,
     "TEST_BATCH_SIZE": 1000,
-    "EPOCHS": 10,
+    "EPOCHS": 15,
     "LEARNING_RATE": 1,
     "LOG_INTERVAL": 10,
 }
@@ -60,9 +60,10 @@ def train(model, device, train_loader, optimizer, epoch):
         # if batch_idx % CONFIG["LOG_INTERVAL"] == 0:
         #     print(f"Train Epoch: {epoch} [{batch}/{total} ({process_percentage:.0f}%)]\tLoss: {loss_item:.6f}")
 
-    if len(train_loader):
-        average_loss = total_loss / len(train_loader)
-        print(f"Train Epoch: {epoch}\tAverage Loss: {average_loss:.6f}")
+    average_loss = total_loss / len(train_loader)
+    print(f"Train Epoch: {epoch}\tAverage Loss: {average_loss:.6f}")
+
+    return average_loss
 
 
 def test(model, device, test_loader):
@@ -82,6 +83,8 @@ def test(model, device, test_loader):
     accuracy = correct_num / test_num * 100
 
     print(f"Test set: Average loss: {test_loss:.4f}, Accuracy: {accuracy:.2f}%\n")
+
+    return accuracy
 
 
 def main():
@@ -117,11 +120,28 @@ def main():
     model = LeNet5().to(device)
     optimizer = torch.optim.Adadelta(model.parameters(), lr=CONFIG["LEARNING_RATE"])
 
-    start_time = time.time()
+    epochs = []
+    train_loss_list = []
+    test_accuracy_list = []
     for epoch in range(1, CONFIG["EPOCHS"] + 1):
-        train(model, device, train_loader, optimizer, epoch)
-        test(model, device, test_loader)
-    print(f"total time: {(time.time() - start_time):.2f}s")
+        epochs.append(epoch)
+        train_loss = train(model, device, train_loader, optimizer, epoch)
+        test_accuracy = test(model, device, test_loader)
+        train_loss_list.append(train_loss)
+        test_accuracy_list.append(test_accuracy)
+
+    # Visualization
+    fig, (ax1, ax2) = plt.subplots(2, 1)
+    fig.suptitle('MNIST LeNet5 Result')
+
+    ax1.plot(epochs, train_loss_list, 'r')
+    ax1.set_ylabel('Train loss')
+
+    ax2.plot(epochs, test_accuracy_list, 'b')
+    ax2.axis([epochs[0], epochs[-1], 90, 100])
+    ax2.set_xlabel('epochs')
+    ax2.set_ylabel('Test accuracy')
+    plt.show()
 
 
 if __name__ == "__main__":
