@@ -1,4 +1,4 @@
-numpy==1.19.4
+numpy==1.19.3
 Pillow==8.0.1
 torch==1.7.1+cu110
 torchaudio==0.7.2
